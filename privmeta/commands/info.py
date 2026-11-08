@@ -1,5 +1,5 @@
 import piexif
-from ..errors import PrivMetaError, UnsupportedFormat
+from ..errors import VynMetaError, UnsupportedFormat
 from ..fsio import collect
 from ..media import audio, office, pdf, video
 from ..output import fail, info, ok, warn
@@ -29,7 +29,7 @@ def _image_info(path):
     else:
         try:
             data = exif.read(path)
-        except PrivMetaError:
+        except VynMetaError:
             pass
 
     for section in ("0th", "Exif", "GPS", "1st"):
@@ -42,7 +42,7 @@ def _image_info(path):
         segments = xmp.inspect(path)
         if segments:
             lines.append(f"segments: {', '.join(sorted(set(segments)))}")
-    except (PrivMetaError, UnsupportedFormat):
+    except (VynMetaError, UnsupportedFormat):
         pass
     return lines
 
@@ -61,7 +61,7 @@ def _handle_one(source, counters):
         for line in lines:
             info(f"  {line}")
         counters["ok"] += 1
-    except (PrivMetaError, UnsupportedFormat, OSError) as exc:
+    except (VynMetaError, UnsupportedFormat, OSError) as exc:
         fail(f"{source}: {exc}")
         counters["fail"] += 1
 

@@ -2,7 +2,7 @@ import datetime
 import os
 import stat
 
-from privmeta.commands import clean as clean_cmd
+from vynmeta.commands import clean as clean_cmd
 
 
 def _args(paths, **overrides):

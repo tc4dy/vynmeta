@@ -1,21 +1,21 @@
-# PrivMeta EXIF/Metadata Privacy Based Tool
+# VynMeta EXIF/Metadata Privacy Based Tool
  
-[![Tests](https://github.com/tc4dy/privmeta/actions/workflows/test.yml/badge.svg)](https://github.com/tc4dy/privmeta/actions/workflows/test.yml)
+[![Tests](https://github.com/tc4dy/vynmeta/actions/workflows/test.yml/badge.svg)](https://github.com/tc4dy/vynmeta/actions/workflows/test.yml)
 ![Python](https://img.shields.io/badge/python-3.9%2B-blue.svg)
 ![License: MIT](https://img.shields.io/badge/license-MIT-purple.svg)
 ![Metadata](https://img.shields.io/badge/EXIF%2FMetadata-Privacy-orange)
  
-**PrivMeta** is a command-line utility for inspecting, cleaning, and modifying EXIF and metadata across images, PDFs, office documents, audio, and video files.
+**VynMeta** is a command-line utility for inspecting, cleaning, and modifying EXIF and metadata across images, PDFs, office documents, audio, and video files.
  
 <div align="center">
-  <img src="photos/vyn.png" alt="PrivMeta Logo" width="140" style="border-radius: 15px; transform: rotate(-12deg);">
+  <img src="photos/vyn.png" alt="VynMeta Logo" width="140" style="border-radius: 15px; transform: rotate(-12deg);">
 </div>
-Metadata often contains more than you intend to share: exact GPS coordinates, timestamps, camera serial numbers, editing software history, and even embedded thumbnails of the original image. PrivMeta gives you full local control over this data layer. It makes no network requests, and it never modifies files without your explicit instruction.
+Metadata often contains more than you intend to share: exact GPS coordinates, timestamps, camera serial numbers, editing software history, and even embedded thumbnails of the original image. VynMeta gives you full local control over this data layer. It makes no network requests, and it never modifies files without your explicit instruction.
 
 ---
 
 <div align="center">
-  <img src="photos/vyn_banner_v3.gif" alt="PrivMeta Banner" width="100%">
+  <img src="photos/vyn_banner_v3.gif" alt="VynMeta Banner" width="100%">
 </div>
 
 ---
@@ -58,14 +58,14 @@ Metadata often contains more than you intend to share: exact GPS coordinates, ti
 ### [i] Linux, macOS, and Termux
 
 ```bash
-git clone https://github.com/tc4dy/privmeta.git
-cd privmeta
+git clone https://github.com/tc4dy/vynmeta.git
+cd vynmeta
 ./install.sh
 ```
 ### [i] Windows Installation
 ```bash
-git clone https://github.com/tc4dy/privmeta.git
-cd privmeta
+git clone https://github.com/tc4dy/vynmeta.git
+cd vynmeta
 .\install.ps1
 ```
 
@@ -73,7 +73,7 @@ cd privmeta
 
 ```bash
 pip install .
-privmeta --help
+vynmeta --help
 ```
 
 ### [!] Optional Dependencies
@@ -84,21 +84,21 @@ privmeta --help
 
 ---
 
-## [</>] Usage
+### [</>] Usage
 
-Running `privmeta` without arguments opens an interactive menu. For scripting and automation, use the subcommands directly.
+Running `vynmeta` without arguments opens an interactive menu. For scripting and automation, use the subcommands directly.
 
 ### [>] Example Output
 
 **[i] Inspecting a file**
 
 ```text
-$ privmeta info beach.jpg
+$ vynmeta info beach.jpg
 
 ──────────────────────────────────────
-   PrivMeta EXIF/Metadata Privacy Tool
+   VynMeta EXIF/Metadata Privacy Tool
 ──────────────────────────────────────
-   v0.1.3 | github.com/tc4dy
+   v0.1.4 | github.com/tc4dy
 
 [+] beach.jpg [jpeg]
 [>] 0th: 8 tags
@@ -111,12 +111,12 @@ $ privmeta info beach.jpg
 **[i] Cleaning a file**
 
 ```text
-$ privmeta clean --all beach.jpg
+$ vynmeta clean --all beach.jpg
 
 ──────────────────────────────────────
-   PrivMeta EXIF/Metadata Privacy Tool
+   VynMeta EXIF/Metadata Privacy Tool
 ──────────────────────────────────────
-   v0.1.3 | github.com/tc4dy
+   v0.1.4 | github.com/tc4dy
 
 [>] plan: exif, gps, xmp, iptc, icc, comments, thumbnail
 [+] cleaned: beach.jpg -> beach_cleaned.jpg
@@ -128,7 +128,7 @@ $ privmeta clean --all beach.jpg
 Check what metadata is attached to a file before modifying it.
 
 ```bash
-privmeta info photo.jpg
+vynmeta info photo.jpg
 ```
 
 Output lists the EXIF sections found, tag counts, the presence of a thumbnail, and raw metadata segments such as XMP and ICC.
@@ -138,20 +138,20 @@ Output lists the EXIF sections found, tag counts, the presence of a thumbnail, a
 Remove metadata without re-encoding the image, preserving the original image's pixel data.
 
 ```bash
-privmeta clean photo.jpg
+vynmeta clean photo.jpg
 ```
 
 Remove specific fields while keeping others:
 
 ```bash
-privmeta clean --drop gps,thumbnail photo.jpg
-privmeta clean --keep exif photo.jpg
+vynmeta clean --drop gps,thumbnail photo.jpg
+vynmeta clean --keep exif photo.jpg
 ```
 
 Strip metadata from files throughout a directory. Use `-r` to descend into subdirectories:
 
 ```bash
-privmeta clean --all -r ~/Pictures/
+vynmeta clean --all -r ~/Pictures/
 ```
 
 **[+] Clean Options**
@@ -175,13 +175,13 @@ privmeta clean --all -r ~/Pictures/
 Inject synthetic EXIF metadata. This can be useful for testing pipelines, simulating camera output, or generating sample files with controlled metadata.
 
 ```bash
-privmeta fake --camera sony_a7iv --city istanbul photo.jpg
+vynmeta fake --camera sony_a7iv --city istanbul photo.jpg
 ```
 
 Simulate a trip with sequentially increasing dates and a regenerated thumbnail:
 
 ```bash
-privmeta fake --camera fuji_x100v --city tokyo --date-range 2024-05-01:2024-05-07 --timeline --thumbnail photo.jpg
+vynmeta fake --camera fuji_x100v --city tokyo --date-range 2024-05-01:2024-05-07 --timeline --thumbnail photo.jpg
 ```
 
 **[+] Fake Options**
@@ -210,13 +210,13 @@ privmeta fake --camera fuji_x100v --city tokyo --date-range 2024-05-01:2024-05-0
 Aggressive metadata destruction for scenarios where standard cleaning is insufficient. The command re-encodes images to alter original encoder signatures and performs multiple overwrite passes for image files.
 
 ```bash
-privmeta shred --passes 3 --check photo.jpg
+vynmeta shred --passes 3 --check photo.jpg
 ```
 
 Re-encode the image at a specified JPEG quality:
 
 ```bash
-privmeta shred --quality 95 photo.jpg
+vynmeta shred --quality 95 photo.jpg
 ```
 
 **[+] Shred Options**
@@ -232,6 +232,6 @@ privmeta shred --quality 95 photo.jpg
 ## [!] Privacy Notes
 
 - **[!] ICC Profiles:** Removing an ICC profile can alter the perceived colors of an image, especially on wide-gamut displays. If color accuracy is important, use `--keep icc` when cleaning.
-- **[!] Timestamps:** PrivMeta can reset metadata timestamps, but it cannot modify a file's inode change time (`ctime`) on Linux through ordinary file operations. This is an operating system restriction.
+- **[!] Timestamps:** VynMeta can reset metadata timestamps, but it cannot modify a file's inode change time (`ctime`) on Linux through ordinary file operations. This is an operating system restriction.
 - **[!] Backups:** By default, output is written to a new file. If you use `--inplace`, consider enabling `--keep-backup` to retain the original.
 - **[!] Shredding Limitations:** Re-encoding and overwriting data inside a file do not guarantee secure erasure of all previous copies. Filesystems, SSD wear-leveling, snapshots, backups, and journaling may preserve recoverable data outside the resulting file.

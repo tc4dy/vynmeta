@@ -1,6 +1,6 @@
 import shutil
 
-from ..errors import PrivMetaError
+from ..errors import VynMetaError
 
 try:
     from mutagen import File as MutagenFile
@@ -10,7 +10,7 @@ except ImportError:
 
 def _require():
     if MutagenFile is None:
-        raise PrivMetaError("mutagen is not installed")
+        raise VynMetaError("mutagen is not installed")
 
 
 def strip(source, target):
@@ -19,15 +19,15 @@ def strip(source, target):
     try:
         audio = MutagenFile(target)
     except Exception as exc:
-        raise PrivMetaError(f"Cannot open audio file {target}: {exc}")
+        raise VynMetaError(f"Cannot open audio file {target}: {exc}")
     if audio is None:
-        raise PrivMetaError(f"Unsupported audio container: {target}")
+        raise VynMetaError(f"Unsupported audio container: {target}")
     if audio.tags is None:
         return
     try:
         audio.delete()
     except Exception as exc:
-        raise PrivMetaError(f"Audio metadata strip failed: {exc}")
+        raise VynMetaError(f"Audio metadata strip failed: {exc}")
 
 
 def read(source):
@@ -36,9 +36,9 @@ def read(source):
     try:
         audio = MutagenFile(source)
     except Exception as exc:
-        raise PrivMetaError(f"Cannot read audio metadata: {exc}")
+        raise VynMetaError(f"Cannot read audio metadata: {exc}")
     if audio is None:
-        raise PrivMetaError(f"Unsupported audio container: {source}")
+        raise VynMetaError(f"Unsupported audio container: {source}")
     if audio.tags:
         for key in audio.tags:
             info[str(key)] = str(audio.tags[key])

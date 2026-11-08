@@ -6,7 +6,7 @@ from datetime import datetime, timezone
 
 import piexif
 
-from ..errors import PrivMetaError, UnsupportedFormat
+from ..errors import VynMetaError, UnsupportedFormat
 from ..fsio import collect, resolve_output
 from ..image import exif, gps, thumb
 from ..output import fail, info, ok, warn
@@ -31,7 +31,7 @@ def _load_json(name):
         with open(path, "r", encoding="utf-8") as handle:
             return json.load(handle)
     except (OSError, json.JSONDecodeError) as exc:
-        raise PrivMetaError(f"Cannot load profile {name}: {exc}")
+        raise VynMetaError(f"Cannot load profile {name}: {exc}")
 
 
 def _select_camera(cameras, name):
@@ -39,7 +39,7 @@ def _select_camera(cameras, name):
         entry = cameras.get(name)
         if entry is None:
             available = ", ".join(sorted(cameras.keys()))
-            raise PrivMetaError(f"Unknown camera: {name} (available: {available})")
+            raise VynMetaError(f"Unknown camera: {name} (available: {available})")
         return name, entry
     key = random.choice(sorted(cameras.keys()))
     return key, cameras[key]
@@ -58,7 +58,7 @@ def _select_city(cities, name):
     entry = cities.get(name)
     if entry is None:
         available = ", ".join(sorted(cities.keys()))
-        raise PrivMetaError(f"Unknown city: {name} (available: {available})")
+        raise VynMetaError(f"Unknown city: {name} (available: {available})")
     return name, entry
 
 
@@ -151,14 +151,14 @@ def _merge(existing, incoming):
 def _parse_range(value):
     parts = value.split(":")
     if len(parts) != 2:
-        raise PrivMetaError("--date-range must be START:END")
+        raise VynMetaError("--date-range must be START:END")
     try:
         start = datetime.fromisoformat(parts[0])
         end = datetime.fromisoformat(parts[1])
     except ValueError as exc:
-        raise PrivMetaError(f"Invalid date in --date-range: {exc}")
+        raise VynMetaError(f"Invalid date in --date-range: {exc}")
     if end < start:
-        raise PrivMetaError("--date-range end must not be before start")
+        raise VynMetaError("--date-range end must not be before start")
     return start, end
 
 
@@ -202,7 +202,7 @@ def _handle_one(source, args, cameras, lenses, cities, index, total, counters):
             target = source
         ok(f"faked: {source} -> {target}")
         counters["ok"] += 1
-    except (PrivMetaError, UnsupportedFormat, OSError) as exc:
+    except (VynMetaError, UnsupportedFormat, OSError) as exc:
         fail(f"{source}: {exc}")
         counters["fail"] += 1
         if args.fail_fast:
@@ -229,7 +229,7 @@ def run(args):
     for index, source in enumerate(targets, start=1):
         try:
             _handle_one(source, args, cameras, lenses, cities, index, len(targets), counters)
-        except PrivMetaError as exc:
+        except VynMetaError as exc:
             fail(str(exc))
             return 2
     ok(f"done: {counters['ok']} ok, {counters['fail']} failed, {counters['skipped']} skipped")

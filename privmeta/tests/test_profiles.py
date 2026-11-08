@@ -1,4 +1,4 @@
-from privmeta.commands import fake as fake_cmd
+from vynmeta.commands import fake as fake_cmd
 
 REQUIRED_CAMERA_KEYS = {
     "make",

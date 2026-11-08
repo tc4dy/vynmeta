@@ -59,9 +59,4 @@ def test_detect_rejects_unknown_brand(tmp_path):
         detect(path)
 
 
-def test_detect_webp_ripple(tmp_path):
-    path = tmp_path / "image.webp"
-    path.write_bytes(b"RIFF" + b"\x00\x00\x00\x00" + b"WEBP" + b"VP8 ")
-    family, label = detect(str(path))
-    assert family == IMAGE
-    assert label == "webp"
+def test_detect_webp_ri

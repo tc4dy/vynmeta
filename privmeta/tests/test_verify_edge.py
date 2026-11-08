@@ -1,6 +1,6 @@
 from datetime import datetime, timedelta
 
-from privmeta.verify import date_not_future, gps_plausible, plausible_ev
+from vynmeta.verify import date_not_future, gps_plausible, plausible_ev
 
 
 def _exif_date(moment):

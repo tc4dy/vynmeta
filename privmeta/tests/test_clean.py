@@ -1,8 +1,8 @@
 import piexif
 import pytest
 
-from privmeta.commands import clean as clean_cmd
-from privmeta.errors import PrivMetaError
+from vynmeta.commands import clean as clean_cmd
+from vynmeta.errors import PrivMetaError
 
 
 def _args(paths, **overrides):

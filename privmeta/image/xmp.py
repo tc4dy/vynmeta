@@ -1,6 +1,6 @@
 import struct
 
-from ..errors import PrivMetaError, UnsupportedFormat
+from ..errors import VynMetaError, UnsupportedFormat
 from ..fsio import atomic_write
 from ..sniff import detect, IMAGE
 
@@ -52,11 +52,11 @@ def _walk_jpeg(data):
     total = len(data)
     while pos < total:
         if data[pos] != 0xFF:
-            raise PrivMetaError(f"Corrupt JPEG segment at offset {pos}")
+            raise VynMetaError(f"Corrupt JPEG segment at offset {pos}")
         while pos < total and data[pos] == 0xFF:
             pos += 1
         if pos >= total:
-            raise PrivMetaError("Truncated JPEG marker")
+            raise VynMetaError("Truncated JPEG marker")
         marker = data[pos]
         pos += 1
         if marker == JPEG_EOI:
@@ -69,11 +69,11 @@ def _walk_jpeg(data):
             yield marker, None, pos - 2, total
             return
         if pos + 2 > total:
-            raise PrivMetaError("Truncated JPEG segment length")
+            raise VynMetaError("Truncated JPEG segment length")
         length = struct.unpack(">H", data[pos:pos + 2])[0]
         end = pos + length
         if end > total or length < 2:
-            raise PrivMetaError(f"Invalid JPEG segment length at offset {pos - 2}")
+            raise VynMetaError(f"Invalid JPEG segment length at offset {pos - 2}")
         body = data[pos + 2:end]
         yield marker, body, pos - 2, end
         pos = end

@@ -1,206 +1,162 @@
-import json
-import math
+import datetime
 import os
-import random
-from datetime import datetime, timezone
-
-import piexif
+import shutil
+import tempfile
 
 from ..errors import VynMetaError, UnsupportedFormat
-from ..fsio import collect, resolve_output
-from ..image import exif, gps, thumb
+from ..fsio import backup, collect, resolve_output
+from ..image import exif, xmp
 from ..output import fail, info, ok, warn
 from ..sniff import detect, IMAGE
-from .. import timeline
 
-_PROFILE_ROOT = os.path.join(
-    os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "profiles"
-)
+FIELDS = ("exif", "gps", "xmp", "iptc", "icc", "comments", "thumbnail")
 
 
-def _source_mode(path):
+def resolve_plan(args):
+    if args.all_fields and (args.drop or args.keep):
+        raise VynMetaError("--all cannot be combined with --drop or --keep")
+    if args.drop and args.keep:
+        raise VynMetaError("--drop and --keep cannot be used together")
+    if args.drop:
+        selected = _parse_list(args.drop, "--drop")
+        return {field: field in selected for field in FIELDS}
+    if args.keep:
+        kept = _parse_list(args.keep, "--keep")
+        return {field: field not in kept for field in FIELDS}
+    return {field: True for field in FIELDS}
+
+
+def _parse_list(value, flag):
+    items = {item.strip().lower() for item in value.split(",") if item.strip()}
+    if not items:
+        raise VynMetaError(f"{flag} must name at least one field")
+    unknown = items - set(FIELDS)
+    if unknown:
+        raise VynMetaError(f"Unknown fields in {flag}: {', '.join(sorted(unknown))}")
+    return items
+
+
+def _exif_stage(source, stage, plan):
+    if plan["exif"]:
+        exif.strip_all(source, stage)
+        return
+    data = exif.read(source)
+    dirty = False
+    if plan["gps"] and data.get("GPS"):
+        data["GPS"] = {}
+        dirty = True
+    if plan["thumbnail"] and data.get("thumbnail"):
+        data["thumbnail"] = None
+        data["1st"] = {}
+        dirty = True
+    if dirty:
+        exif.write(source, data, stage)
+    else:
+        shutil.copy2(source, stage)
+
+
+def _apply_source_mode(source, target):
     try:
-        return os.stat(path).st_mode & 0o777
+        mode = os.stat(source).st_mode & 0o777
     except OSError:
-        return None
-
-
-def _load_json(name):
-    path = os.path.join(_PROFILE_ROOT, name)
+        return
     try:
-        with open(path, "r", encoding="utf-8") as handle:
-            return json.load(handle)
-    except (OSError, json.JSONDecodeError) as exc:
-        raise VynMetaError(f"Cannot load profile {name}: {exc}")
+        os.chmod(target, mode)
+    except OSError:
+        pass
 
 
-def _select_camera(cameras, name):
-    if name:
-        entry = cameras.get(name)
-        if entry is None:
-            available = ", ".join(sorted(cameras.keys()))
-            raise VynMetaError(f"Unknown camera: {name} (available: {available})")
-        return name, entry
-    key = random.choice(sorted(cameras.keys()))
-    return key, cameras[key]
-
-
-def _select_lens(lenses, camera_key):
-    options = lenses.get(camera_key)
-    if not options:
-        return None
-    return random.choice(options)
-
-
-def _select_city(cities, name):
-    if not name:
-        return None, None
-    entry = cities.get(name)
-    if entry is None:
-        available = ", ".join(sorted(cities.keys()))
-        raise VynMetaError(f"Unknown city: {name} (available: {available})")
-    return name, entry
-
-
-def _rational(value, scale=10):
-    return (int(round(value * scale)), scale)
-
-
-def _shutter(value):
-    if value >= 1:
-        return (int(round(value)), 1)
-    return (1, int(round(1.0 / value)))
-
-
-def _pick_iso(camera):
-    return random.choice(camera["isos"])
-
-
-def _pick_aperture(camera):
-    return random.choice(camera["apertures"])
-
-
-def _pick_shutter(camera):
-    return random.choice(camera["shutters"])
-
-
-def _pick_focal(camera, lens):
-    if lens:
-        return random.randint(lens["focal_min"], lens["focal_max"])
-    return random.randint(camera["focal_min"], camera["focal_max"])
-
-
-def _build_exif(camera, date_value, lens, city, radius, thumbnail_bytes):
-    iso = _pick_iso(camera)
-    aperture = _pick_aperture(camera)
-    shutter = _pick_shutter(camera)
-    focal = _pick_focal(camera, lens)
-    data = {
-        "0th": {
-            piexif.ImageIFD.Make: camera["make"],
-            piexif.ImageIFD.Model: camera["model"],
-            piexif.ImageIFD.Software: camera["software"],
-            piexif.ImageIFD.Orientation: 1,
-        },
-        "Exif": {
-            piexif.ExifIFD.ISOSpeedRatings: iso,
-            piexif.ExifIFD.FNumber: _rational(aperture),
-            piexif.ExifIFD.ExposureTime: _shutter(shutter),
-            piexif.ExifIFD.FocalLength: (focal, 1),
-            piexif.ExifIFD.DateTimeOriginal: date_value.strftime("%Y:%m:%d %H:%M:%S"),
-            piexif.ExifIFD.DateTimeDigitized: date_value.strftime("%Y:%m:%d %H:%M:%S"),
-        },
-        "GPS": {},
-        "1st": {},
-        "thumbnail": None,
-    }
-    if lens:
-        data["Exif"][piexif.ExifIFD.LensModel] = lens["name"]
-        apex = int(round(2.0 * math.log2(lens["aperture_max"])))
-        data["Exif"][piexif.ExifIFD.MaxApertureValue] = (apex, 1)
-    if city:
-        lat, lon = gps.random_point(city["lat"], city["lon"], radius or city["radius_km"])
-        data["GPS"] = gps.build(
-            lat,
-            lon,
-            altitude=city["alt"] + random.uniform(-15.0, 15.0),
-            direction=random.randint(0, 359),
+def _clean_jpeg(source, target, plan):
+    exif_layer = plan["exif"] or plan["gps"] or plan["thumbnail"]
+    byte_layer = plan["xmp"] or plan["iptc"] or plan["icc"] or plan["comments"]
+    if exif_layer:
+        directory = os.path.dirname(os.path.abspath(target)) or "."
+        fd, stage = tempfile.mkstemp(dir=directory, prefix=".vynmeta.")
+        os.close(fd)
+        _exif_stage(source, stage, plan)
+        byte_source = stage
+    else:
+        stage = None
+        byte_source = source
+    if byte_layer:
+        xmp.strip(
+            byte_source,
+            target,
+            drop_xmp=plan["xmp"],
+            drop_iptc=plan["iptc"],
+            drop_icc=plan["icc"],
+            drop_comments=plan["comments"],
         )
-    if thumbnail_bytes:
-        data["thumbnail"] = thumbnail_bytes
-        data["1st"] = {
-            piexif.ImageIFD.Compression: 6,
-            piexif.ImageIFD.XResolution: (72, 1),
-            piexif.ImageIFD.YResolution: (72, 1),
-            piexif.ImageIFD.Orientation: 1,
-        }
-    return data
+    else:
+        if byte_source != target:
+            if os.path.exists(target):
+                os.unlink(target)
+            os.replace(byte_source, target)
+    if stage and os.path.exists(stage) and stage != target:
+        os.unlink(stage)
 
 
-def _merge(existing, incoming):
-    for section in ("0th", "Exif", "GPS"):
-        existing.setdefault(section, {})
-        for key, value in incoming.get(section, {}).items():
-            existing[section][key] = value
-    if incoming.get("thumbnail"):
-        existing["thumbnail"] = incoming["thumbnail"]
-        existing["1st"] = incoming.get("1st", {})
-    return existing
+def _clean_image(source, target, plan, label):
+    if not any(plan.values()):
+        shutil.copy2(source, target)
+    elif label == "jpeg":
+        _clean_jpeg(source, target, plan)
+    else:
+        xmp.strip(
+            source,
+            target,
+            drop_xmp=plan["xmp"],
+            drop_iptc=plan["iptc"],
+            drop_icc=plan["icc"],
+            drop_comments=plan["comments"],
+            drop_exif=plan["exif"] or plan["gps"],
+        )
+    _apply_source_mode(source, target)
 
 
-def _parse_range(value):
-    parts = value.split(":")
-    if len(parts) != 2:
-        raise VynMetaError("--date-range must be START:END")
+def _reset_time(path):
+    stamp = datetime.datetime(2020, 1, 1, 12, 0, 0).timestamp()
+    os.utime(path, (stamp, stamp))
+
+
+def _rename_neutral(path, index):
+    directory = os.path.dirname(os.path.abspath(path))
+    extension = os.path.splitext(path)[1]
+    base = f"photo_{index:04d}"
+    candidate = os.path.join(directory, base + extension)
+    counter = 1
+    while os.path.exists(candidate):
+        candidate = os.path.join(directory, f"{base}_{counter}{extension}")
+        counter += 1
+    os.rename(path, candidate)
+    return candidate
+
+
+def _handle_one(source, args, plan, index, counters):
     try:
-        start = datetime.fromisoformat(parts[0])
-        end = datetime.fromisoformat(parts[1])
-    except ValueError as exc:
-        raise VynMetaError(f"Invalid date in --date-range: {exc}")
-    if end < start:
-        raise VynMetaError("--date-range end must not be before start")
-    return start, end
-
-
-def _pick_date(args, index, total):
-    if not args.date_range:
-        return datetime.now(timezone.utc).replace(tzinfo=None)
-    start, end = _parse_range(args.date_range)
-    if args.timeline:
-        schedule = timeline.sequential(start, end, total)
-        return schedule[index - 1]
-    return timeline.random_between(start, end)
-
-
-def _handle_one(source, args, cameras, lenses, cities, index, total, counters):
-    try:
+        target = resolve_output(source, args.output_dir)
+        if args.dry_run:
+            fields = [name for name, active in plan.items() if active]
+            info(f"dry run: {source}")
+            info(f"fields: {', '.join(fields) if fields else 'none'}")
+            counters["dry"] += 1
+            return
         family, label = detect(source)
         if family != IMAGE:
             warn(f"skipped (not an image): {source}")
             counters["skipped"] += 1
             return
-        camera_key, camera = _select_camera(cameras, args.camera)
-        _, city = _select_city(cities, args.city)
-        lens = _select_lens(lenses, camera_key)
-        chosen = _pick_date(args, index, total)
-        payload = thumb.create(source) if args.thumbnail else None
-        incoming = _build_exif(camera, chosen, lens, city, args.radius, payload)
-        target = resolve_output(source, args.output_dir, suffix="_faked")
-        mode = _source_mode(source) if args.inplace else None
-        if args.preserve:
-            final = _merge(exif.read(source), incoming)
-        else:
-            final = incoming
-        exif.write(source, final, target)
+        _clean_image(source, target, plan, label)
+        if args.rename:
+            target = _rename_neutral(target, index)
+        if args.reset_time:
+            _reset_time(target)
         if args.inplace:
+            if args.keep_backup:
+                backup(source)
             os.replace(target, source)
-            if mode is not None:
-                try:
-                    os.chmod(source, mode)
-                except OSError:
-                    pass
             target = source
-        ok(f"faked: {source} -> {target}")
+        ok(f"cleaned: {source} -> {target}")
         counters["ok"] += 1
     except (VynMetaError, UnsupportedFormat, OSError) as exc:
         fail(f"{source}: {exc}")
@@ -210,27 +166,20 @@ def _handle_one(source, args, cameras, lenses, cities, index, total, counters):
 
 
 def run(args):
-    if args.seed is not None:
-        random.seed(args.seed)
-    cameras = _load_json("cameras.json")
-    lenses = _load_json("lenses.json")
-    cities = _load_json("cities.json")
+    plan = resolve_plan(args)
     targets, warnings = collect(args.paths, args.recursive)
     for message in warnings:
         warn(message)
-    if args.city and args.city not in cities:
-        fail(f"unknown city: {args.city}")
-        return 2
-    if args.camera and args.camera not in cameras:
-        fail(f"unknown camera: {args.camera}")
-        return 2
-    info(f"targets: {len(targets)}")
-    counters = {"ok": 0, "fail": 0, "skipped": 0}
+    info(f"plan: {', '.join(name for name, active in plan.items() if active) or 'none'}")
+    counters = {"ok": 0, "fail": 0, "skipped": 0, "dry": 0}
     for index, source in enumerate(targets, start=1):
         try:
-            _handle_one(source, args, cameras, lenses, cities, index, len(targets), counters)
+            _handle_one(source, args, plan, index, counters)
         except VynMetaError as exc:
             fail(str(exc))
             return 2
-    ok(f"done: {counters['ok']} ok, {counters['fail']} failed, {counters['skipped']} skipped")
+    ok(
+        f"done: {counters['ok']} ok, {counters['fail']} failed, "
+        f"{counters['skipped']} skipped, {counters['dry']} dry"
+    )
     return 0 if counters["fail"] == 0 else 2

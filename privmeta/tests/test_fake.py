@@ -1,6 +1,6 @@
 import piexif
 
-from privmeta.commands import fake as fake_cmd
+from vynmeta.commands import fake as fake_cmd
 
 
 def _args(paths, **overrides):

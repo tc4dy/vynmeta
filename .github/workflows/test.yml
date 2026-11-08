@@ -33,4 +33,4 @@ jobs:
           pip install piexif pillow click pypdf mutagen pytest
 
       - name: Run test suite
-        run: python -m pytest privmeta/tests -v
+        run: python -m pytest vynmeta/tests -v

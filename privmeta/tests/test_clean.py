@@ -2,7 +2,7 @@ import piexif
 import pytest
 
 from vynmeta.commands import clean as clean_cmd
-from vynmeta.errors import PrivMetaError
+from vynmeta.errors import VynMetaError
 
 
 def _args(paths, **overrides):
@@ -59,7 +59,7 @@ def test_clean_keep_exif(jpeg_with_exif, tmp_path):
 
 def test_clean_drop_and_keep_conflict(jpeg_with_exif):
     ns = _args([jpeg_with_exif], all_fields=False, drop="gps", keep="exif")
-    with pytest.raises(PrivMetaError):
+    with pytest.raises(VynMetaError):
         clean_cmd.run(ns)
 
 

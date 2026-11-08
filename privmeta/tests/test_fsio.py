@@ -3,7 +3,7 @@ import stat
 
 import pytest
 
-from vynmeta.errors import PrivMetaError
+from vynmeta.errors import VynMetaError
 from vynmeta.fsio import atomic_write, backup, collect, resolve_output
 
 
@@ -52,14 +52,14 @@ def test_collect_expands_glob_pattern(tmp_path):
 
 
 def test_collect_rejects_missing_paths(tmp_path):
-    with pytest.raises(PrivMetaError):
+    with pytest.raises(VynMetaError):
         collect([str(tmp_path / "ghost.jpg")])
 
 
 def test_collect_suggests_quoted_spaces(tmp_path):
     spaced = tmp_path / "my photo.jpg"
     spaced.write_bytes(b"data")
-    with pytest.raises(PrivMetaError) as exc_info:
+    with pytest.raises(VynMetaError) as exc_info:
         collect([str(tmp_path / "my"), "photo.jpg"])
     assert "quoting" in str(exc_info.value)
 

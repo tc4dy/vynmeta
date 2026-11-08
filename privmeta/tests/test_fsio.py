@@ -3,8 +3,8 @@ import stat
 
 import pytest
 
-from privmeta.errors import PrivMetaError
-from privmeta.fsio import atomic_write, backup, collect, resolve_output
+from vynmeta.errors import PrivMetaError
+from vynmeta.fsio import atomic_write, backup, collect, resolve_output
 
 
 def _mode(path):

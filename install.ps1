@@ -1,8 +1,8 @@
 Set-StrictMode -Version Latest
 $ErrorActionPreference = "Stop"
 
-$Repo = "https://github.com/tc4dy/privmeta.git"
-$ArchiveUrl = "https://github.com/tc4dy/privmeta/archive/refs/heads/main.zip"
+$Repo = "https://github.com/tc4dy/vynmeta.git"
+$ArchiveUrl = "https://github.com/tc4dy/vynmeta/archive/refs/heads/main.zip"
 $MinVersion = [version]"3.9"
 
 function Write-Step($msg) {
@@ -92,7 +92,7 @@ function Test-PathEntry($Haystack, $Needle) {
     return $false
 }
 
-Write-Step "PrivMeta installer"
+Write-Step "VynMeta installer"
 Write-Host "    repo: " -NoNewline
 Write-Host $Repo -ForegroundColor DarkGray
 Write-Host ""
@@ -115,12 +115,12 @@ if ($LASTEXITCODE -ne 0) {
     Stop-Install "pip is not available for this Python."
 }
 
-$TempDir = Join-Path $env:TEMP ("privmeta-install-" + [guid]::NewGuid().ToString("N"))
+$TempDir = Join-Path $env:TEMP ("vynmeta-install-" + [guid]::NewGuid().ToString("N"))
 New-Item -ItemType Directory -Path $TempDir | Out-Null
 
 try {
     Write-Step "fetching repository"
-    $cloneTarget = Join-Path $TempDir "privmeta"
+    $cloneTarget = Join-Path $TempDir "vynmeta"
     if (Get-Command git -ErrorAction SilentlyContinue) {
         & git clone --depth 1 $Repo $cloneTarget *> $null
         if ($LASTEXITCODE -ne 0) {
@@ -136,7 +136,7 @@ try {
         }
         try {
             Expand-Archive -Path $archive -DestinationPath $TempDir -Force
-            Rename-Item -Path (Join-Path $TempDir "privmeta-main") -NewName "privmeta"
+            Rename-Item -Path (Join-Path $TempDir "vynmeta-main") -NewName "vynmeta"
         } catch {
             Stop-Install "extracting archive failed."
         }
@@ -220,21 +220,21 @@ try {
         }
     }
 
-    $privmetaOnPath = Get-Command privmeta -ErrorAction SilentlyContinue
-    $privmetaExe = Join-Path $userScripts "privmeta.exe"
-    if ($privmetaOnPath) {
-        Write-Ok "privmeta is available on PATH"
-    } elseif (Test-Path $privmetaExe) {
-        Write-Ok ("privmeta installed at " + $privmetaExe + " (restart terminal to use on PATH)")
+    $vynmetaOnPath = Get-Command vynmeta -ErrorAction SilentlyContinue
+    $vynmetaExe = Join-Path $userScripts "vynmeta.exe"
+    if ($vynmetaOnPath) {
+        Write-Ok "vynmeta is available on PATH"
+    } elseif (Test-Path $vynmetaExe) {
+        Write-Ok ("vynmeta installed at " + $vynmetaExe + " (restart terminal to use on PATH)")
     } else {
-        Write-Warn "privmeta was not found; check pip output for errors"
+        Write-Warn "vynmeta was not found; check pip output for errors"
     }
 
     Write-Host ""
     Write-Ok "install finished"
     Write-Host "[>] " -ForegroundColor Cyan -NoNewline
     Write-Host "run: " -NoNewline
-    Write-Host "privmeta" -ForegroundColor White
+    Write-Host "vynmeta" -ForegroundColor White
 } finally {
     if (Test-Path $TempDir) {
         Remove-Item -Recurse -Force $TempDir -ErrorAction SilentlyContinue

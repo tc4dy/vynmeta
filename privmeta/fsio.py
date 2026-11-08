@@ -3,7 +3,7 @@ import os
 import shutil
 import tempfile
 
-from .errors import PrivMetaError
+from .errors import VynMetaError
 
 
 def _silent_unlink(path):
@@ -25,7 +25,7 @@ def _apply_mode(reference, target):
 
 def atomic_write(target, data):
     directory = os.path.dirname(os.path.abspath(target)) or "."
-    fd, tmp = tempfile.mkstemp(dir=directory, prefix=".privmeta.")
+    fd, tmp = tempfile.mkstemp(dir=directory, prefix=".vynmeta.")
     try:
         with os.fdopen(fd, "wb") as handle:
             handle.write(data)
@@ -90,8 +90,8 @@ def collect(paths, recursive=False):
         if hint:
             warnings.append(hint)
         if warnings:
-            raise PrivMetaError("no valid input files; " + "; ".join(warnings))
-        raise PrivMetaError("no valid input files")
+            raise VynMetaError("no valid input files; " + "; ".join(warnings))
+        raise VynMetaError("no valid input files")
     return unique, warnings
 
 

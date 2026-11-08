@@ -1,6 +1,6 @@
 from pypdf import PdfReader, PdfWriter
 
-from ..errors import PrivMetaError
+from ..errors import VynMetaError
 
 _TRANSIENT_INFO = "/Info"
 _CATALOG_KEYS = ("/Metadata", "/PieceInfo")
@@ -50,14 +50,14 @@ def strip(source, target):
             writer.write(handle)
         _scrub_trailer(target)
     except Exception as exc:
-        raise PrivMetaError(f"PDF metadata strip failed: {exc}")
+        raise VynMetaError(f"PDF metadata strip failed: {exc}")
 
 
 def read(source):
     try:
         reader = PdfReader(source)
     except Exception as exc:
-        raise PrivMetaError(f"Cannot read PDF: {exc}")
+        raise VynMetaError(f"Cannot read PDF: {exc}")
     info = {}
     if reader.metadata:
         for key in reader.metadata:

@@ -3,7 +3,7 @@ import random
 
 import piexif
 
-from ..errors import PrivMetaError
+from ..errors import VynMetaError
 from . import exif
 
 
@@ -20,16 +20,16 @@ def read(path):
 def strip(source, target):
     data = exif.read(source)
     if not data.get("GPS"):
-        raise PrivMetaError("No GPS data found")
+        raise VynMetaError("No GPS data found")
     data["GPS"] = {}
     exif.write(source, data, target)
 
 
 def validate(lat, lon):
     if not -90.0 <= lat <= 90.0:
-        raise PrivMetaError(f"Latitude out of range: {lat}")
+        raise VynMetaError(f"Latitude out of range: {lat}")
     if not -180.0 <= lon <= 180.0:
-        raise PrivMetaError(f"Longitude out of range: {lon}")
+        raise VynMetaError(f"Longitude out of range: {lon}")
 
 
 def haversine(lat1, lon1, lat2, lon2):
@@ -48,7 +48,7 @@ def haversine(lat1, lon1, lat2, lon2):
 def random_point(center_lat, center_lon, radius_km):
     validate(center_lat, center_lon)
     if radius_km <= 0:
-        raise PrivMetaError(f"Radius must be positive: {radius_km}")
+        raise VynMetaError(f"Radius must be positive: {radius_km}")
     distance = random.uniform(0.0, radius_km)
     bearing = random.uniform(0.0, 2.0 * math.pi)
     lat_offset = distance / 111.32

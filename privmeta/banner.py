@@ -41,11 +41,11 @@ def show():
     rule = "─" * 38
     if color:
         rule_line = f"\033[36m{rule}\033[0m"
-        title_line = f"\033[1;36mPrivMeta\033[0m \033[90mEXIF/Metadata Privacy Tool\033[0m"
+        title_line = f"\033[1;36mVynMeta\033[0m \033[90mEXIF/Metadata Privacy Tool\033[0m"
         meta_line = f"\033[38;5;208mv{__version__}\033[0m \033[90m|\033[0m \033[32mgithub.com/tc4dy\033[0m"
     else:
         rule_line = rule
-        title_line = "PrivMeta EXIF/Metadata Privacy Tool"
+        title_line = "VynMeta EXIF/Metadata Privacy Tool"
         meta_line = f"v{__version__} | github.com/tc4dy"
     sys.stdout.write("\n")
     sys.stdout.write(rule_line + "\n")

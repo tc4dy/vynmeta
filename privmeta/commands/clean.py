@@ -3,7 +3,7 @@ import os
 import shutil
 import tempfile
 
-from ..errors import PrivMetaError, UnsupportedFormat
+from ..errors import VynMetaError, UnsupportedFormat
 from ..fsio import backup, collect, resolve_output
 from ..image import exif, xmp
 from ..output import fail, info, ok, warn
@@ -14,9 +14,9 @@ FIELDS = ("exif", "gps", "xmp", "iptc", "icc", "comments", "thumbnail")
 
 def resolve_plan(args):
     if args.all_fields and (args.drop or args.keep):
-        raise PrivMetaError("--all cannot be combined with --drop or --keep")
+        raise VynMetaError("--all cannot be combined with --drop or --keep")
     if args.drop and args.keep:
-        raise PrivMetaError("--drop and --keep cannot be used together")
+        raise VynMetaError("--drop and --keep cannot be used together")
     if args.drop:
         selected = _parse_list(args.drop, "--drop")
         return {field: field in selected for field in FIELDS}
@@ -29,10 +29,10 @@ def resolve_plan(args):
 def _parse_list(value, flag):
     items = {item.strip().lower() for item in value.split(",") if item.strip()}
     if not items:
-        raise PrivMetaError(f"{flag} must name at least one field")
+        raise VynMetaError(f"{flag} must name at least one field")
     unknown = items - set(FIELDS)
     if unknown:
-        raise PrivMetaError(f"Unknown fields in {flag}: {', '.join(sorted(unknown))}")
+        raise VynMetaError(f"Unknown fields in {flag}: {', '.join(sorted(unknown))}")
     return items
 
 
@@ -71,7 +71,7 @@ def _clean_jpeg(source, target, plan):
     byte_layer = plan["xmp"] or plan["iptc"] or plan["icc"] or plan["comments"]
     if exif_layer:
         directory = os.path.dirname(os.path.abspath(target)) or "."
-        fd, stage = tempfile.mkstemp(dir=directory, prefix=".privmeta.")
+        fd, stage = tempfile.mkstemp(dir=directory, prefix=".vynmeta.")
         os.close(fd)
         _exif_stage(source, stage, plan)
         byte_source = stage
@@ -158,7 +158,7 @@ def _handle_one(source, args, plan, index, counters):
             target = source
         ok(f"cleaned: {source} -> {target}")
         counters["ok"] += 1
-    except (PrivMetaError, UnsupportedFormat, OSError) as exc:
+    except (VynMetaError, UnsupportedFormat, OSError) as exc:
         fail(f"{source}: {exc}")
         counters["fail"] += 1
         if args.fail_fast:
@@ -175,7 +175,7 @@ def run(args):
     for index, source in enumerate(targets, start=1):
         try:
             _handle_one(source, args, plan, index, counters)
-        except PrivMetaError as exc:
+        except VynMetaError as exc:
             fail(str(exc))
             return 2
     ok(

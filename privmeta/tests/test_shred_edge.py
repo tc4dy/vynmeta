@@ -5,7 +5,7 @@ import struct
 import piexif
 from PIL import Image, PngImagePlugin
 
-from privmeta.commands import shred as shred_cmd
+from vynmeta.commands import shred as shred_cmd
 
 
 def _args(paths, **overrides):

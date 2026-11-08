@@ -1,6 +1,6 @@
 import piexif
 
-from privmeta.image import gps
+from vynmeta.image import gps
 
 
 def _decode_dms(value):

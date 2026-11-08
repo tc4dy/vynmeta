@@ -1,6 +1,6 @@
 import pytest
 
-from privmeta.image import gps
+from vynmeta.image import gps
 
 
 def _tick_seconds(seconds_rational):

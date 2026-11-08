@@ -3,12 +3,12 @@ import shutil
 import piexif
 from PIL import Image
 
-from ..errors import PrivMetaError, UnsupportedFormat
+from ..errors import VynMetaError, UnsupportedFormat
 from ..sniff import detect, IMAGE
 
 
 def _wrap_piexif_error(exc, path):
-    return PrivMetaError(f"EXIF operation failed on {path}: {exc}")
+    return VynMetaError(f"EXIF operation failed on {path}: {exc}")
 
 
 def read(path):
@@ -33,7 +33,7 @@ def dump(data):
     try:
         return piexif.dump(data)
     except (ValueError, TypeError, piexif.InvalidImageDataError) as exc:
-        raise PrivMetaError(f"Cannot serialize EXIF: {exc}")
+        raise VynMetaError(f"Cannot serialize EXIF: {exc}")
 
 
 def write(source, data, target):
@@ -52,7 +52,7 @@ def write(source, data, target):
         with Image.open(source) as image:
             image.save(target, format=image.format, exif=exif_bytes)
     except OSError as exc:
-        raise PrivMetaError(f"Cannot write image {target}: {exc}")
+        raise VynMetaError(f"Cannot write image {target}: {exc}")
 
 
 def strip_all(source, target):
@@ -70,13 +70,13 @@ def strip_all(source, target):
         with Image.open(source) as image:
             image.save(target, format=image.format)
     except OSError as exc:
-        raise PrivMetaError(f"Cannot strip EXIF from {target}: {exc}")
+        raise VynMetaError(f"Cannot strip EXIF from {target}: {exc}")
 
 
 def clear_section(source, target, section):
     data = read(source)
     if section not in data:
-        raise PrivMetaError(f"Unknown EXIF section: {section}")
+        raise VynMetaError(f"Unknown EXIF section: {section}")
     data[section] = {}
     if section == "1st":
         data["thumbnail"] = None
@@ -87,7 +87,7 @@ def delete_tags(source, target, section, tags):
     data = read(source)
     bucket = data.get(section)
     if bucket is None:
-        raise PrivMetaError(f"Unknown EXIF section: {section}")
+        raise VynMetaError(f"Unknown EXIF section: {section}")
     for tag in tags:
         bucket.pop(tag, None)
     write(source, data, target)
@@ -101,7 +101,7 @@ def thumbnail_present(path):
 def drop_thumbnail(source, target):
     data = read(source)
     if not data.get("thumbnail") and not data.get("1st"):
-        raise PrivMetaError("No embedded thumbnail found")
+        raise VynMetaError("No embedded thumbnail found")
     data["thumbnail"] = None
     data["1st"] = {}
     write(source, data, target)

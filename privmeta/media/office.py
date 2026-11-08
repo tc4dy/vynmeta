@@ -1,7 +1,7 @@
 import zipfile
 import xml.etree.ElementTree as ET
 
-from ..errors import PrivMetaError
+from ..errors import VynMetaError
 
 _NS_REL = "http://schemas.openxmlformats.org/package/2006/relationships"
 _NS_CT = "http://schemas.openxmlformats.org/package/2006/content-types"
@@ -58,7 +58,7 @@ def strip(source, target):
                     payload = _transform(item.filename, payload)
                     target_zip.writestr(item, payload)
     except (zipfile.BadZipFile, OSError, ET.ParseError) as exc:
-        raise PrivMetaError(f"Office metadata strip failed: {exc}")
+        raise VynMetaError(f"Office metadata strip failed: {exc}")
 
 
 def read(source):
@@ -69,5 +69,5 @@ def read(source):
                 if name.startswith(_DROP_PREFIX):
                     info[name] = archive.getinfo(name).file_size
     except (zipfile.BadZipFile, OSError) as exc:
-        raise PrivMetaError(f"Cannot read Office archive: {exc}")
+        raise VynMetaError(f"Cannot read Office archive: {exc}")
     return info

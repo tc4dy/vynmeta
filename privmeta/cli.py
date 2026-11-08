@@ -6,7 +6,7 @@ import click
 from . import __version__
 from .banner import show
 from .commands import clean, fake, info, shred
-from .errors import PrivMetaError
+from .errors import VynMetaError
 from .interactive import launch
 
 
@@ -24,7 +24,7 @@ def _safe(func, args):
         code = func(args)
         if code is not None:
             sys.exit(code)
-    except PrivMetaError as exc:
+    except VynMetaError as exc:
         click.echo(f"[-] {exc}", err=True)
         sys.exit(2)
     except KeyboardInterrupt:
@@ -123,7 +123,7 @@ cli.add_command(info_cmd, "info")
 
 @click.command()
 def version():
-    click.echo(f"PrivMeta {__version__}")
+    click.echo(f"VynMeta {__version__}")
 
 
 cli.add_command(version, "version")

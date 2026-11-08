@@ -2,7 +2,7 @@ import os
 
 from PIL import Image
 
-from ..errors import PrivMetaError, UnsupportedFormat
+from ..errors import VynMetaError, UnsupportedFormat
 from ..fsio import collect, resolve_output
 from ..image import exif
 from ..media import audio, office, pdf, video
@@ -31,13 +31,13 @@ def _recompress(source, target, quality):
         with Image.open(source) as image:
             image.save(target, format=image.format, quality=quality, optimize=True)
     except OSError as exc:
-        raise PrivMetaError(f"Recompression failed: {exc}")
+        raise VynMetaError(f"Recompression failed: {exc}")
 
 
 def _check(source):
     try:
         data = exif.read(source)
-    except PrivMetaError:
+    except VynMetaError:
         return []
     issues = []
     exif_ifd = data.get("Exif", {})
@@ -137,7 +137,7 @@ def _handle_one(source, args, counters):
             target = source
         ok(f"shredded: {source} -> {target}")
         counters["ok"] += 1
-    except (PrivMetaError, UnsupportedFormat, OSError) as exc:
+    except (VynMetaError, UnsupportedFormat, OSError) as exc:
         fail(f"{source}: {exc}")
         counters["fail"] += 1
         if args.fail_fast:
@@ -153,7 +153,7 @@ def run(args):
     for source in targets:
         try:
             _handle_one(source, args, counters)
-        except PrivMetaError as exc:
+        except VynMetaError as exc:
             fail(str(exc))
             return 2
     ok(f"done: {counters['ok']} ok, {counters['fail']} failed")

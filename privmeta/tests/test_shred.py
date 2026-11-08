@@ -1,6 +1,6 @@
 import piexif
 
-from privmeta.commands import shred as shred_cmd
+from vynmeta.commands import shred as shred_cmd
 
 
 def _args(paths, **overrides):

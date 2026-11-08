@@ -1,7 +1,7 @@
 set -euo pipefail
 
-REPO="https://github.com/tc4dy/privmeta.git"
-PKG_NAME="privmeta"
+REPO="https://github.com/tc4dy/vynmeta.git"
+PKG_NAME="vynmeta"
 MIN_PY="3.9"
 
 RED=$'\033[31m'
@@ -74,7 +74,7 @@ in_path() {
     esac
 }
 
-step "PrivMeta installer"
+step "VynMeta installer"
 printf '%srepo:%s %s\n\n' "$DIM" "$RESET" "$REPO"
 
 PY_BIN="$(detect_python)"
@@ -105,7 +105,7 @@ if command_exists git; then
 else
     warn "git is not installed, trying archive download"
     ARCHIVE="${WORK_DIR}/src.tar.gz"
-    if ! curl -sSL "https://github.com/tc4dy/privmeta/archive/refs/heads/main.tar.gz" -o "$ARCHIVE"; then
+    if ! curl -sSL "https://github.com/tc4dy/vynmeta/archive/refs/heads/main.tar.gz" -o "$ARCHIVE"; then
         finish_fail "download failed. Install git or check your network."
     fi
     if ! tar -xzf "$ARCHIVE" -C "$WORK_DIR"; then
@@ -198,12 +198,12 @@ if ! in_path "$USER_BIN"; then
     esac
 fi
 
-if command_exists privmeta; then
-    ok "privmeta is available on PATH"
-elif [ -x "${USER_BIN}/privmeta" ]; then
-    ok "privmeta installed at ${USER_BIN}/privmeta (restart your shell to use on PATH)"
+if command_exists vynmeta; then
+    ok "vynmeta is available on PATH"
+elif [ -x "${USER_BIN}/vynmeta" ]; then
+    ok "vynmeta installed at ${USER_BIN}/vynmeta (restart your shell to use on PATH)"
 else
-    warn "privmeta was not found; check pip output for errors"
+    warn "vynmeta was not found; check pip output for errors"
 fi
 
 printf '\n'

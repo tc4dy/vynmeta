@@ -1,7 +1,7 @@
 import pytest
 
-from privmeta.errors import UnsupportedFormat
-from privmeta.sniff import AUDIO, IMAGE, VIDEO, detect
+from vynmeta.errors import UnsupportedFormat
+from vynmeta.sniff import AUDIO, IMAGE, VIDEO, detect
 
 
 def _bmff_file(tmp_path, name, brand):
@@ -61,7 +61,4 @@ def test_detect_rejects_unknown_brand(tmp_path):
 
 def test_detect_webp_ripple(tmp_path):
     path = tmp_path / "image.webp"
-    path.write_bytes(b"RIFF" + b"\x00\x00\x00\x00" + b"WEBP" + b"VP8 ")
-    family, label = detect(str(path))
-    assert family == IMAGE
-    assert label == "webp"
+    path.write_bytes(b"RIFF" + b"\x00\x00\x00\x

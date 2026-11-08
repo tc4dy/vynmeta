@@ -1,7 +1,7 @@
 import shutil
 import subprocess
 
-from ..errors import MissingDependency, PrivMetaError
+from ..errors import MissingDependency, VynMetaError
 
 
 def _ffmpeg():
@@ -39,10 +39,10 @@ def strip(source, target):
             check=False,
         )
     except OSError as exc:
-        raise PrivMetaError(f"Cannot execute ffmpeg: {exc}")
+        raise VynMetaError(f"Cannot execute ffmpeg: {exc}")
     if result.returncode != 0:
         message = result.stderr.decode("utf-8", errors="replace").strip()
-        raise PrivMetaError(f"ffmpeg failed: {message[:400]}")
+        raise VynMetaError(f"ffmpeg failed: {message[:400]}")
 
 
 def read(source):
@@ -56,9 +56,9 @@ def read(source):
             check=False,
         )
     except OSError as exc:
-        raise PrivMetaError(f"Cannot execute ffmpeg: {exc}")
+        raise VynMetaError(f"Cannot execute ffmpeg: {exc}")
     if result.returncode != 0:
-        raise PrivMetaError(f"ffmpeg could not read {source}")
+        raise VynMetaError(f"ffmpeg could not read {source}")
     info = {}
     for line in result.stdout.decode("utf-8", errors="replace").splitlines():
         if "=" in line and not line.startswith(";"):

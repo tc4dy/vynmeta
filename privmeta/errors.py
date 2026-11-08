@@ -1,14 +1,14 @@
-class PrivMetaError(Exception):
+class VynMetaError(Exception):
     pass
 
 
-class UnsupportedFormat(PrivMetaError):
+class UnsupportedFormat(VynMetaError):
     pass
 
 
-class MissingDependency(PrivMetaError):
+class MissingDependency(VynMetaError):
     pass
 
 
-class ValidationFailed(PrivMetaError):
+class ValidationFailed(VynMetaError):
     pass

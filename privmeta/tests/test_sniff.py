@@ -1,7 +1,7 @@
 import pytest
 
-from privmeta.errors import UnsupportedFormat
-from privmeta.sniff import detect, IMAGE
+from vynmeta.errors import UnsupportedFormat
+from vynmeta.sniff import detect, IMAGE
 
 
 def test_detect_jpeg(jpeg_with_exif):

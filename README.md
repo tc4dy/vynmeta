@@ -123,7 +123,7 @@ $ vynmeta clean --all beach.jpg
 [+] done: 1 ok, 0 failed, 0 skipped, 0 dry
 ```
 
-### [i] Inspect
+### [/] Inspect
 
 Check what metadata is attached to a file before modifying it.
 
